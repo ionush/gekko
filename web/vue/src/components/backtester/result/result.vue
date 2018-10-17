@@ -11,30 +11,31 @@
 </template>
 
 <script>
-import resultSummary from './summary.vue'
-import chart from './chartWrapper.vue'
-import roundtripTable from './roundtripTable.vue'
+import resultSummary from './summary.vue';
+import chart from './chartWrapper.vue';
+import roundtripTable from './roundtripTable.vue';
 
 export default {
   props: ['result'],
   data: () => {
-    return {}
+    return {};
   },
   methods: {},
   components: {
     roundtripTable,
     resultSummary,
-    chart
+    chart,
   },
   computed: {
     candles: function() {
       return {
         candles: this.result.stratCandles,
-        trades: this.result.trades
+        trades: this.result.trades,
+        inflections: this.result.inflections,
       };
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style>

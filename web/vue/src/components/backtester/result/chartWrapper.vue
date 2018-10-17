@@ -5,9 +5,11 @@
 </template>
 
 <script>
-
-import chart from '../../../d3/chart4'
-import { draw as drawMessage, clear as clearMessage } from '../../../d3/message'
+import chart from '../../../d3/chart4';
+import {
+  draw as drawMessage,
+  clear as clearMessage,
+} from '../../../d3/message';
 
 const MIN_CANDLES = 4;
 
@@ -16,15 +18,19 @@ export default {
 
   data: function() {
     return {
-      isClicked: false
-    }
+      isClicked: false,
+    };
   },
 
   watch: {
-    data: function() { this.render() },
+    data: function() {
+      this.render();
+    },
   },
 
-  created: function() { setTimeout( this.render, 100) },
+  created: function() {
+    setTimeout(this.render, 100);
+  },
   beforeDestroy: function() {
     this.remove();
   },
@@ -36,22 +42,25 @@ export default {
     render: function() {
       this.remove();
 
-
-      if(_.size(this.data.candles) < MIN_CANDLES) {
+      if (_.size(this.data.candles) < MIN_CANDLES) {
         drawMessage('Not enough data to spawn chart');
       } else {
-        chart(this.data.candles, this.data.trades, this.height);
+        chart(
+          this.data.candles,
+          this.data.trades,
+          this.height,
+          this.data.inflections
+        );
       }
     },
     remove: function() {
       d3.select('#chart').html('');
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style>
-
 #chartWrapper.clickable {
   position: relative;
 }
@@ -76,6 +85,10 @@ export default {
   clip-path: url(#clip);
 }
 
+#chart cross {
+  clip-path: url(#clip);
+}
+
 #chart .zoom {
   cursor: move;
   fill: none;
@@ -94,11 +107,18 @@ export default {
 }*/
 
 #chart circle.buy {
-  fill: #7FFF00;
+  fill: #7fff00;
 }
 
 #chart circle.sell {
   fill: red;
 }
 
+#chart cross.v {
+  fill: orange;
+}
+
+#chart circle.v {
+  fill: orange;
+}
 </style>
