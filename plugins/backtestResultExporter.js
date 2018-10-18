@@ -52,25 +52,45 @@ const findInflection = function(range, store, candle) {
   // console.log('middle is', middle);
   const results = [];
 
-  let followTrend = true;
+  let followVTrend = true;
+  let followNTrend = true;
   const sample = store.slice(store.length - range, store.length);
 
+  //support
   //verify values to left of middle are increasing
   //TEMPORARILY USE OPEN VALUES INSTEAD OF LOW
   for (let i = middle - 1; i >= 0; i--) {
     if (sample[i].open < sample[i + 1].open) {
-      followTrend = false;
+      followVTrend = false;
     }
   }
-
   //verify values to right of middle are increasing
   for (let j = middle + 1; j < range; j++) {
-    if (sample[j].open < sample[j - 1].open) followTrend = false;
+    if (sample[j].open < sample[j - 1].open) followVTrend = false;
   }
 
-  if (followTrend) {
-    return { open: sample[middle].open, date: sample[middle].start };
+  //resistance
+  //verify values to left of middle are decreasing
+  for (let i = middle - 1; i >= 0; i--) {
+    if (sample[i].open > sample[i + 1].open) {
+      followNTrend = false;
+    }
   }
+  //verify values to right of middle are decreasing
+  for (let j = middle + 1; j < range; j++) {
+    if (sample[j].open > sample[j - 1].open) followNTrend = false;
+  }
+  if (followVTrend && followNTrend)
+    return [
+      { type: 'v', open: sample[middle].open, date: sample[middle].start },
+      { type: 'n', open: sample[middle].open, date: sample[middle].start },
+    ];
+
+  if (followVTrend)
+    return { type: 'v', open: sample[middle].open, date: sample[middle].start };
+
+  if (followNTrend)
+    return { type: 'n', open: sample[middle].open, date: sample[middle].start };
 };
 
 BacktestResultExporter.prototype.processInflection = function(inflection) {
@@ -85,8 +105,9 @@ BacktestResultExporter.prototype.processPortfolioValueChange = function(
 
 BacktestResultExporter.prototype.processStratCandle = function(candle) {
   const result = findInflection(5, this.stratCandles, candle);
-  if (result)
-    this.inflections.push({ type: 'v', open: result.open, date: result.date });
+  if (result && result.length === 2) {
+    this.inflections.push(...result);
+  } else if (result) this.inflections.push(result);
 
   let strippedCandle;
 

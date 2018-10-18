@@ -121,4 +121,8 @@ export default {
 #chart circle.v {
   fill: orange;
 }
+
+#chart circle.n {
+  fill: aqua;
+}
 </style>
