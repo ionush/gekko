@@ -118,11 +118,18 @@ export default {
   fill: orange;
 }
 
-#chart circle.v {
+/* #chart circle.v {
+  fill: orange;
+} */
+#chart circle.support {
   fill: orange;
 }
 
-#chart circle.n {
+/* #chart circle.n {
+  fill: aqua;
+} */
+
+#chart circle.resistance {
   fill: aqua;
 }
 </style>

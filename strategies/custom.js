@@ -58,6 +58,7 @@ strat.init = function() {
 
 // What happens on every new candle?
 strat.update = function(candle) {
+  // console.log('singleCandle', candle);
   //add close data to to array
   this.historicalClose.push({
     low: this.candle.low,
@@ -66,7 +67,7 @@ strat.update = function(candle) {
     time: this.candle.start,
   });
 
-  const result = findInflection(5, this.historicalClose, candle);
+  const result = findInflection(3, this.historicalClose, candle);
   if (result) {
     this.inflectionPoints.push(result);
     // if (this.currentTrend === null || this.currentTrend === 'short') {
@@ -111,10 +112,9 @@ strat.check = function() {
 
 strat.end = function() {
   //print collated historical data
-  console.log('historical data');
-  console.log(util.inspect(this.historicalClose, { maxArrayLength: null }));
-
-  console.log('inflections', this.inflectionPoints);
+  // console.log('historical data');
+  // console.log(util.inspect(this.historicalClose, { maxArrayLength: null }));
+  // console.log('inflections', this.inflectionPoints);
 };
 
 module.exports = strat;

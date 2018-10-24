@@ -66,13 +66,13 @@ export default {
           },
           backtestResultExporter: {
             enabled: true,
-            writeToDisk: false,
+            writeToDisk: true,
             data: {
               inflections: true,
               stratUpdates: false,
               roundtrips: true,
               stratCandles: true,
-              stratCandleProps: ['open'],
+              stratCandleProps: ['open', 'close', 'high', 'low', 'volume'],
               trades: true,
             },
           },
