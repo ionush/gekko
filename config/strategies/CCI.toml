@@ -1,4 +1,4 @@
-# constant multiplier. 0.015 gets to around 70% fit
+# constant multiplier". 0.015" gets to around 70% fit
 constant = 0.015
 
 # history size, make same or smaller than history
