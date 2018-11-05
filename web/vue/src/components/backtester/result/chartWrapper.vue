@@ -2,10 +2,14 @@
 #chartWrapper(v-bind:class='{ clickable: !isClicked }')
   .shield(v-on:click.prevent='click')
   svg#chart(width='960', :height='height')
+//- div
+//-   highcharts(class="stock" :constructor-type="'stockChart'" :options="chartOptions" )
+
 </template>
 
 <script>
-import chart from '../../../d3/chart4';
+// import chart from '../../../d3/chart4';
+
 import {
   draw as drawMessage,
   clear as clearMessage,
@@ -16,30 +20,47 @@ const MIN_CANDLES = 4;
 export default {
   props: ['data', 'height'],
 
-  data: function() {
+  data: function () {
     return {
       isClicked: false,
+      stockOptions: {
+        rangeSelector: {
+          selected: 1
+        },
+        title: {
+          text: 'AAPL Stock Price'
+        },
+        series: [{
+          name: 'AAPL',
+          data: [10, 20, 10, 23, 65, 121, 44, 66, 98, 30, 32, 56, 25, 12, 53],
+          pointStart: Date.UTC(2018, 1, 1),
+          pointInterval: 1000 * 3600 * 24,
+          tooltip: {
+            valueDecimals: 2
+          }
+        }]
+      }
     };
   },
 
   watch: {
-    data: function() {
+    data: function () {
       this.render();
     },
   },
 
-  created: function() {
+  created: function () {
     setTimeout(this.render, 100);
   },
-  beforeDestroy: function() {
+  beforeDestroy: function () {
     this.remove();
   },
 
   methods: {
-    click: function() {
+    click: function () {
       this.isClicked = true;
     },
-    render: function() {
+    render: function () {
       this.remove();
 
       if (_.size(this.data.candles) < MIN_CANDLES) {
@@ -53,14 +74,19 @@ export default {
         );
       }
     },
-    remove: function() {
+    remove: function () {
       d3.select('#chart').html('');
     },
   },
 };
 </script>
 
-<style>
+<style >
+.stock {
+  width: 70%;
+  margin: 0 auto;
+}
+
 #chartWrapper.clickable {
   position: relative;
 }

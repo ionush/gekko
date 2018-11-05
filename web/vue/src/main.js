@@ -1,23 +1,31 @@
-import Vue from 'vue'
-import App from './App.vue'
+import Vue from 'vue';
+import App from './App.vue';
+import HighChartsVue from 'highcharts-vue';
+import Highcharts from 'highcharts';
+import stockInit from 'highcharts/modules/stock';
+// import mapInit from 'highcharts/modules/map';
 
-import VueRouter from 'vue-router'
+stockInit(Highcharts);
+// mapInit(Highcharts);
+
+import VueRouter from 'vue-router';
 Vue.use(VueRouter);
+Vue.use(HighChartsVue);
 
-import store from './store'
+import store from './store';
 
-import backtester from './components/backtester/backtester.vue'
-import home from './components/layout/home.vue'
+import backtester from './components/backtester/backtester.vue';
+import home from './components/layout/home.vue';
 
-import data from './components/data/data.vue'
-import importer from './components/data/import/importer.vue'
-import singleImport from './components/data/import/single.vue'
-import config from './components/config/config.vue'
+import data from './components/data/data.vue';
+import importer from './components/data/import/importer.vue';
+import singleImport from './components/data/import/single.vue';
+import config from './components/config/config.vue';
 
-import gekkoList from './components/gekko/list.vue'
-import newGekko from './components/gekko/new.vue'
-import singleGekko from './components/gekko/singleGekko.vue'
-import { connect as connectWS } from './components/global/ws'
+import gekkoList from './components/gekko/list.vue';
+import newGekko from './components/gekko/new.vue';
+import singleGekko from './components/gekko/singleGekko.vue';
+import { connect as connectWS } from './components/global/ws';
 
 const router = new VueRouter({
   mode: 'hash',
@@ -33,7 +41,7 @@ const router = new VueRouter({
     { path: '/live-gekkos', component: gekkoList },
     { path: '/live-gekkos/new', component: newGekko },
     { path: '/live-gekkos/:id', component: singleGekko },
-  ]
+  ],
 });
 
 // setup some stuff
@@ -43,5 +51,5 @@ new Vue({
   router,
   store,
   el: '#app',
-  render: h => h(App)
-})
+  render: h => h(App),
+});

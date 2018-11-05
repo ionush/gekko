@@ -17,6 +17,7 @@ const BacktestResultExporter = function() {
   this.stratCandles = [];
   this.trades = [];
   this.inflections = [];
+  this.closeLine = [];
 
   this.candleProps = config.backtestResultExporter.data.stratCandleProps;
 
@@ -47,35 +48,34 @@ const findInflection = function(range, store, candle) {
   let followVTrend = true;
   let followNTrend = true;
   const sample = store.slice(store.length - range, store.length);
-  // console.log('samplee', sample);
 
   //support & resistance
   //verify values to left of middle are increasing
   //verify values to left of middle are decreasing
   //TEMPORARILY USE OPEN VALUES INSTEAD OF LOW
   for (let i = middle - 1; i >= 0; i--) {
-    if (sample[i].open < sample[i + 1].open) followVTrend = false;
-    if (sample[i].open > sample[i + 1].open) followNTrend = false;
+    if (sample[i].open <= sample[i + 1].open) followVTrend = false;
+    if (sample[i].open >= sample[i + 1].open) followNTrend = false;
   }
 
   //verify values to right of middle are increasing
   //verify values to right of middle are decreasing
   for (let j = middle + 1; j < range; j++) {
-    if (sample[j].open < sample[j - 1].open) followVTrend = false;
-    if (sample[j].open > sample[j - 1].open) followNTrend = false;
+    if (sample[j].open <= sample[j - 1].open) followVTrend = false;
+    if (sample[j].open >= sample[j - 1].open) followNTrend = false;
   }
 
-  const { open, close, start, high, volume, low } = sample[middle];
+  const { open, close, x, high, volume, low, close: y } = sample[middle];
 
-  if (followVTrend && followNTrend)
-    return [
-      { type: 'v', date: sample[middle].start, open, close, high, volume, low },
-      { type: 'n', date: sample[middle].start, open, close, high, volume, low },
-    ];
+  // if (followVTrend && followNTrend)
+  //   return [
+  //     { type: 'v', date: sample[middle].start, open, close, high, volume, low },
+  //     { type: 'n', date: sample[middle].start, open, close, high, volume, low },
+  //   ];
 
-  if (followVTrend) return { type: 'support', date: start, open, close, high, volume, low };
+  if (followVTrend) return { type: 'support', x, open, close, high, volume, low, y };
 
-  if (followNTrend) return { type: 'resistance', date: start, open, close, high, volume, low };
+  if (followNTrend) return { type: 'resistance', x, open, close, high, volume, low, y };
 };
 
 BacktestResultExporter.prototype.processInflection = function(inflection) {
@@ -96,23 +96,33 @@ BacktestResultExporter.prototype.processStratCandle = function(candle) {
 
   let strippedCandle;
 
+  this.closeLine.push({ x: candle.start.valueOf(), close: candle.close, y: candle.close });
+
+  // console.log('timeeee', candle.start);
+
   if (!this.candleProps) {
     strippedCandle = {
       ...candle,
-      start: candle.start.unix(),
-      close: candle.close,
+      // x: candle.start.unix(),
+      x: candle.start.valueOf(),
+      open: candle.open,
       high: candle.high,
-      volume: candle.volume,
       low: candle.low,
+      close: candle.close,
+      volume: candle.volume,
+      y: candle.close,
     };
   } else {
     strippedCandle = {
       ..._.pick(candle, this.candleProps),
-      start: candle.start.unix(),
-      close: candle.close,
+      // x: candle.start.unix(),
+      x: candle.start.valueOf(),
+      open: candle.open,
       high: candle.high,
-      volume: candle.volume,
       low: candle.low,
+      close: candle.close,
+      volume: candle.volume,
+      y: candle.close,
     };
   }
 
@@ -152,8 +162,6 @@ BacktestResultExporter.prototype.finalize = function(done) {
     performanceReport: this.performanceReport,
   };
 
-  if (config.backtestResultExporter.data.inflections) backtest.inflections = this.inflections;
-
   if (config.backtestResultExporter.data.stratUpdates) backtest.stratUpdates = this.stratUpdates;
 
   if (config.backtestResultExporter.data.roundtrips) backtest.roundtrips = this.roundtrips;
@@ -161,6 +169,10 @@ BacktestResultExporter.prototype.finalize = function(done) {
   if (config.backtestResultExporter.data.stratCandles) backtest.stratCandles = this.stratCandles;
 
   if (config.backtestResultExporter.data.trades) backtest.trades = this.trades;
+
+  if (config.backtestResultExporter.data.inflections) backtest.inflections = this.inflections;
+
+  if (config.backtestResultExporter.data.closeLine) backtest.closeLine = this.closeLine;
 
   if (env === 'child-process') {
     process.send({ backtest });
@@ -170,11 +182,11 @@ BacktestResultExporter.prototype.finalize = function(done) {
   const csvCandlesFields = ['open', 'close', 'high', 'low', 'volume', 'start'];
   const optsI = { fields: csvInflectionFields };
   const optsC = { fields: csvCandlesFields };
-  console.log('candles', this.stratCandles);
+  // console.log('candles', this.stratCandles);
   try {
     const inflections = json2csv(this.inflections, optsI);
     const candles = json2csv(this.stratCandles, optsC);
-    console.log('csv', inflections);
+    // console.log('csv', inflections);
     this.writeToDisk(candles, () => {}, 'candles');
     this.writeToDisk(inflections, () => {}, 'inflections');
   } catch (e) {
@@ -194,7 +206,7 @@ BacktestResultExporter.prototype.writeToDisk = function(backtest, next, section)
   if (section) filename = `${section}-backtest-${config.tradingAdvisor.method}-${now}.csv`;
   else filename = `backtest-${config.tradingAdvisor.method}-${now}.json`;
   const fsParseState = filename.includes('.csv') ? backtest : JSON.stringify(backtest);
-  fs.writeFile(util.dirs().gekko + filename, fsParseState, err => {
+  fs.writeFile(util.dirs().output + filename, fsParseState, err => {
     if (err) {
       log.error('unable to write backtest result', err);
     } else {
