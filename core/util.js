@@ -32,7 +32,7 @@ var util = {
   },
   // overwrite the whole config
   setConfig: function(config) {
-    // console.log(111, config, _config);
+    console.log(111, config, _config);
     _config = config;
   },
   setConfigProperty: function(parent, key, value) {
@@ -113,7 +113,6 @@ var util = {
       web: ROOT + 'web/',
       config: ROOT + 'config/',
       broker: ROOT + 'exchange/',
-      output: ROOT + 'output/',
     };
   },
   inherit: function(dest, source) {

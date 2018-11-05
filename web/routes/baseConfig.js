@@ -23,12 +23,11 @@ config.backtestResultExporter = {
   enabled: false,
   writeToDisk: false,
   data: {
+    inflections: true,
     stratUpdates: false,
     roundtrips: true,
     stratCandles: true,
     trades: true,
-    inflections: true,
-    closeLine: true,
   },
 };
 

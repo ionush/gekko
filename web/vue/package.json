@@ -7,8 +7,6 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
-    "highcharts": "^6.2.0",
-    "highcharts-vue": "^1.2.0",
     "marked": "^0.4.0",
     "superagent": "^3.8.3",
     "superagent-no-cache": "github:uditalias/superagent-no-cache",

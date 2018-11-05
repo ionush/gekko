@@ -48,13 +48,13 @@ method.log = function() {
   var diff = macd.diff;
   var signal = macd.signal.result;
 
-  // console.log('calculated MACD properties for candle:');
-  // console.log('\t', 'short:', macd.short.result.toFixed(digits));
-  // console.log('\t', 'long:', macd.long.result.toFixed(digits));
-  // console.log('\t', 'macd:', diff.toFixed(digits));
-  // console.log('\t', 'signal:', signal.toFixed(digits));
-  // console.log('\t', 'macdiff:', macd.result.toFixed(digits));
-  // console.log('this.candle', this.candle);
+  console.log('calculated MACD properties for candle:');
+  console.log('\t', 'short:', macd.short.result.toFixed(digits));
+  console.log('\t', 'long:', macd.long.result.toFixed(digits));
+  console.log('\t', 'macd:', diff.toFixed(digits));
+  console.log('\t', 'signal:', signal.toFixed(digits));
+  console.log('\t', 'macdiff:', macd.result.toFixed(digits));
+  console.log('this.candle', this.candle);
   // console.log('this', this);
 };
 
@@ -74,9 +74,10 @@ method.check = function() {
 
     this.trend.duration++;
 
-    // console.log('In uptrend since', this.trend.duration, 'candle(s)');
+    console.log('In uptrend since', this.trend.duration, 'candle(s)');
 
-    if (this.trend.duration >= this.settings.thresholds.persistence) this.trend.persisted = true;
+    if (this.trend.duration >= this.settings.thresholds.persistence)
+      this.trend.persisted = true;
 
     if (this.trend.persisted && !this.trend.adviced) {
       this.trend.adviced = true;
@@ -95,16 +96,17 @@ method.check = function() {
 
     this.trend.duration++;
 
-    // console.log('In downtrend since', this.trend.duration, 'candle(s)');
+    console.log('In downtrend since', this.trend.duration, 'candle(s)');
 
-    if (this.trend.duration >= this.settings.thresholds.persistence) this.trend.persisted = true;
+    if (this.trend.duration >= this.settings.thresholds.persistence)
+      this.trend.persisted = true;
 
     if (this.trend.persisted && !this.trend.adviced) {
       this.trend.adviced = true;
       this.advice('short');
     } else this.advice();
   } else {
-    // console.log('In no trend');
+    console.log('In no trend');
 
     // we're not in an up nor in a downtrend
     // but for now we ignore sideways trends
