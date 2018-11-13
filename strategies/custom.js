@@ -14,37 +14,36 @@ const util = require('util');
 // Let's create our own strat
 var strat = {};
 
-//Create find inflection function
+//CHECK BACKTESTRESULTEXPORTER.JS FOR NEWEST LOGIC
+// const findInflection = function(range, store, candle) {
+//   if (range % 2 !== 1) {
+//     console.log('range must be odd number!');
+//     return;
+//   } else if (store.length < range) {
+//     console.log('not enough data points');
+//     return;
+//   }
+//   const middle = Math.floor(range / 2);
+//   // console.log('middle is', middle);
+//   const results = [];
 
-const findInflection = function(range, store, candle) {
-  if (range % 2 !== 1) {
-    console.log('range must be odd number!');
-    return;
-  } else if (store.length < range) {
-    console.log('not enough data points');
-    return;
-  }
-  const middle = Math.floor(range / 2);
-  // console.log('middle is', middle);
-  const results = [];
+//   let followTrend = true;
+//   const sample = store.slice(store.length - range, store.length);
+//   var middleVal = sample[middle].low;
+//   // console.log('mmm', middleVal);
 
-  let followTrend = true;
-  const sample = store.slice(store.length - range, store.length);
-  var middleVal = sample[middle].low;
-  // console.log('mmm', middleVal);
+//   //verify values to left of middle are increasing
+//   for (let i = middle - 1; i >= 0; i--) {
+//     if (sample[i].low < sample[i + 1].low) followTrend = false;
+//   }
 
-  //verify values to left of middle are increasing
-  for (let i = middle - 1; i >= 0; i--) {
-    if (sample[i].low < sample[i + 1].low) followTrend = false;
-  }
+//   //verify values to right of middle are increasing
+//   for (let j = middle + 1; j < range; j++) {
+//     if (sample[j].low < sample[j - 1].low) followTrend = false;
+//   }
 
-  //verify values to right of middle are increasing
-  for (let j = middle + 1; j < range; j++) {
-    if (sample[j].low < sample[j - 1].low) followTrend = false;
-  }
-
-  if (followTrend) return sample[middle];
-};
+//   if (followTrend) return sample[middle];
+// };
 
 // Prepare everything our method needs
 strat.init = function() {

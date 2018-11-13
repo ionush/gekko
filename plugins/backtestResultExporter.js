@@ -52,17 +52,16 @@ const findInflection = function(range, store, candle) {
   //support & resistance
   //verify values to left of middle are increasing
   //verify values to left of middle are decreasing
-  //TEMPORARILY USE OPEN VALUES INSTEAD OF LOW
   for (let i = middle - 1; i >= 0; i--) {
-    if (sample[i].open <= sample[i + 1].open) followVTrend = false;
-    if (sample[i].open >= sample[i + 1].open) followNTrend = false;
+    if (sample[i].low <= sample[i + 1].low) followVTrend = false;
+    if (sample[i].high >= sample[i + 1].high) followNTrend = false;
   }
 
   //verify values to right of middle are increasing
   //verify values to right of middle are decreasing
   for (let j = middle + 1; j < range; j++) {
-    if (sample[j].open <= sample[j - 1].open) followVTrend = false;
-    if (sample[j].open >= sample[j - 1].open) followNTrend = false;
+    if (sample[j].low <= sample[j - 1].low) followVTrend = false;
+    if (sample[j].high >= sample[j - 1].high) followNTrend = false;
   }
 
   const { open, close, x, high, volume, low, close: y } = sample[middle];
@@ -90,9 +89,10 @@ BacktestResultExporter.prototype.processStratCandle = function(candle) {
   const result = findInflection(3, this.stratCandles, candle);
   // console.log('configg', config.backtestResultExporter.data);
 
-  if (result && result.length === 2) {
-    this.inflections.push(...result);
-  } else if (result) this.inflections.push(result);
+  // if (result && result.length === 2) {
+  // this.inflections.push(...result);
+  // } else
+  if (result) this.inflections.push(result);
 
   let strippedCandle;
 
@@ -178,15 +178,15 @@ BacktestResultExporter.prototype.finalize = function(done) {
     process.send({ backtest });
   }
 
-  const csvInflectionFields = ['type', 'date', 'open', 'close', 'high', 'volume', 'low'];
-  const csvCandlesFields = ['open', 'close', 'high', 'low', 'volume', 'start'];
+  const csvInflectionFields = ['type', 'x', 'open', 'close', 'high', 'low', 'volume'];
+  const csvCandlesFields = ['x', 'open', 'close', 'high', 'low', 'volume'];
   const optsI = { fields: csvInflectionFields };
   const optsC = { fields: csvCandlesFields };
   // console.log('candles', this.stratCandles);
   try {
     const inflections = json2csv(this.inflections, optsI);
     const candles = json2csv(this.stratCandles, optsC);
-    // console.log('csv', inflections);
+    console.log('csv', inflections);
     this.writeToDisk(candles, () => {}, 'candles');
     this.writeToDisk(inflections, () => {}, 'inflections');
   } catch (e) {
