@@ -44,7 +44,6 @@ history
 TMP_*
 .idea
 volumes
-config.js
 config-*.js
 private-*.js
 private-*.toml

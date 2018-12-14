@@ -12,13 +12,13 @@
 
 <script>
 import resultSummary from './summary.vue';
-import stockChart from './stockChart'
+import stockChart from './stockChart';
 import roundtripTable from './roundtripTable.vue';
 
 export default {
   props: ['result'],
   data: () => {
-    return {}
+    return {};
   },
   methods: {},
   components: {
@@ -27,20 +27,23 @@ export default {
     stockChart,
   },
   computed: {
-    chartData: function () {
-      this.result.inflections.forEach(e => e.color = e.type === "support" ? 'aqua' : 'orange')
+    chartData: function() {
+      this.result.inflections.forEach(e => (e.color = e.type === 'support' ? 'aqua' : 'orange'));
       this.result.trades.forEach(e => {
-        e.y = e.price
-        e.x = e.date * 1000
-        e.title = e.action === "buy" ? 'B' : "S"
-        e.text = `<span>Cost:${e.cost.toFixed(4)}<br>Amount:${e.amount.toFixed(4)}</span>`
-      })
-      console.log('inChartData', this.result)
+        e.y = e.price;
+        e.x = e.date * 1000;
+        e.title = e.action === 'buy' ? 'B' : 'S';
+        e.text = `<span>Cost:${e.cost.toFixed(4)}<br>Amount:${e.amount.toFixed(4)}</span>`;
+      });
+      // const parsedRegression = this.result.regression.map(e => {
+      //   return { x: e[0], y: e[1] };
+      // });
       return {
         candles: this.result.stratCandles,
         trades: this.result.trades,
         inflections: this.result.inflections,
-        closeLine: this.result.closeLine
+        closeLine: this.result.closeLine,
+        regression: this.result.regression,
       };
     },
   },
