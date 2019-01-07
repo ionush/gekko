@@ -1,9 +1,8 @@
 module.exports = {
-  presets: [
-    '@vue/app'
+  presets: ['@vue/app'],
+  ignore: ['node_modules'],
+  plugins: [
+    'transform-commonjs-es2015-modules',
+    'transform-object-rest-spread',
   ],
-  ignore: [
-    'node_modules',
-  ],
-  plugins : ["transform-commonjs-es2015-modules"]
-}
+};
