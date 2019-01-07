@@ -11,7 +11,7 @@ const fs = require('fs');
 const json2csv = require('json2csv').parse;
 const timeseries = require('timeseries-analysis');
 
-const BacktestResultExporter = function() {
+const BacktestResultExporter = function () {
   this.performanceReport;
   this.roundtrips = [];
   this.stratUpdates = [];
@@ -40,7 +40,7 @@ const BacktestResultExporter = function() {
   _.bindAll(this);
 };
 
-const findInflection = function(range, store) {
+const findInflection = function (range, store) {
   if (range % 2 !== 1) {
     console.log('range must be odd number!');
     return;
@@ -68,17 +68,60 @@ const findInflection = function(range, store) {
     if (sample[j].high >= sample[j - 1].high) followNTrend = false;
   }
 
-  const { open, close, x, high, volume, low, close: y } = sample[middle];
+  const {
+    open,
+    close,
+    x,
+    high,
+    volume,
+    low,
+    close: y
+  } = sample[middle];
 
   if (followVTrend && followNTrend)
-    return [
-      { type: 'support', x, open, close, high, volume, low, y },
-      { type: 'resistance', x, open, close, high, volume, low, y },
+    return [{
+        type: 'support',
+        x,
+        open,
+        close,
+        high,
+        volume,
+        low,
+        y
+      },
+      {
+        type: 'resistance',
+        x,
+        open,
+        close,
+        high,
+        volume,
+        low,
+        y
+      },
     ];
 
-  if (followVTrend) return { type: 'support', x, open, close, high, volume, low, y };
+  if (followVTrend) return {
+    type: 'support',
+    x,
+    open,
+    close,
+    high,
+    volume,
+    low,
+    y
+  };
 
-  if (followNTrend) return { type: 'resistance', x, open, close, high, volume, low, y };
+  if (followNTrend) return {
+    type: 'resistance',
+    x,
+    open,
+    close,
+    high,
+    volume,
+    low,
+    y
+  };
 };
 
 const calcRegression = (forecastPoints, store) => {
@@ -91,7 +134,10 @@ const calcRegression = (forecastPoints, store) => {
       value: 'close',
     })
   );
-  const regression = t.sliding_regression_forecast({ sample: sampleSize, degree: 5 }).output();
+  const regression = t.sliding_regression_forecast({
+    sample: sampleSize,
+    degree: 5
+  }).output();
   return regression;
 };
 
@@ -116,14 +162,12 @@ const calcBounces = inflections => {
       }
     }
   }
-  // console.log('bouncespree', bounces.length, bounces);
   const consolidated = consolidateBounces(bounces);
-  // console.log('consolidatedd', consolidated);
   return consolidated;
 };
 
 const consolidateBounces = bounces => {
-  const writeBounce = (bounces, consolidatedBounces, startIndex, i) => {
+  const writeConsolidatedBounce = (bounces, consolidatedBounces, startIndex, i) => {
     const size = (bounces[i][1].high / bounces[startIndex][0].low - 1) * 100;
     const recency = bounces[startIndex][0].x;
     const duration = bounces[i][1].x - bounces[startIndex][0].x;
@@ -132,23 +176,37 @@ const consolidateBounces = bounces => {
       size,
       recency,
       duration,
+      consolidated: true
     });
   };
+
+  const writeSingleBounce = (bounces, consolidateBounces, i) => {
+    const size = (bounces[i][1].high / bounces[i][0].low - 1) * 100
+    const recency = bounces[i][0].x
+    const duration = bounces[i][1].x - bounces[i][0].x
+    consolidateBounces.push({
+      bounce: [bounces[i][0], bounces[i][1]],
+      size,
+      recency,
+      duration,
+      consolidated: false
+    })
+  }
 
   if (bounces.length < 2) return;
   const consolidatedBounces = [];
   let startIndex = undefined;
   for (let i = 1; i < bounces.length; i++) {
     if (bounces[i][0].low >= bounces[i - 1][0].low && bounces[i][1].high >= bounces[i - 1][1].high) {
-      console.log('foundbouncee', i, startIndex, bounces[i - 1]);
       if (!startIndex && i === bounces.length - 1) {
         startIndex = i - 1;
-        writeBounce(bounces, consolidatedBounces, startIndex, i);
+        writeConsolidatedBounce(bounces, consolidatedBounces, startIndex, i);
       } else if (!startIndex) startIndex = i - 1;
     } else if (startIndex) {
-      console.log('writingbounce', i, startIndex);
-      writeBounce(bounces, consolidatedBounces, startIndex, i - 1);
+      writeConsolidatedBounce(bounces, consolidatedBounces, startIndex, i - 1);
       startIndex = undefined;
+    } else {
+      writeSingleBounce(bounces, consolidatedBounces, i - 1)
     }
   }
   return consolidatedBounces;
@@ -158,11 +216,11 @@ const consolidateBounces = bounces => {
 //   // this.inflections.push({ type: inflection.type, close: inflection.close });
 // };
 
-BacktestResultExporter.prototype.processPortfolioValueChange = function(portfolio) {
+BacktestResultExporter.prototype.processPortfolioValueChange = function (portfolio) {
   this.portfolioValue = portfolio.balance;
 };
 
-BacktestResultExporter.prototype.processStratCandle = function(candle) {
+BacktestResultExporter.prototype.processStratCandle = function (candle) {
   const inflection = findInflection(3, this.stratCandles);
   if (Array.isArray(inflection)) this.inflections.push(...inflection);
   else if (inflection) this.inflections.push(inflection);
@@ -179,7 +237,11 @@ BacktestResultExporter.prototype.processStratCandle = function(candle) {
 
   let strippedCandle;
 
-  this.closeLine.push({ x: candle.start.valueOf(), close: candle.close, y: candle.close });
+  this.closeLine.push({
+    x: candle.start.valueOf(),
+    close: candle.close,
+    y: candle.close
+  });
 
   if (!this.candleProps) {
     strippedCandle = {
@@ -212,7 +274,7 @@ BacktestResultExporter.prototype.processStratCandle = function(candle) {
   this.stratCandles.push(strippedCandle);
 };
 
-BacktestResultExporter.prototype.processRoundtrip = function(roundtrip) {
+BacktestResultExporter.prototype.processRoundtrip = function (roundtrip) {
   this.roundtrips.push({
     ...roundtrip,
     entryAt: roundtrip.entryAt.unix(),
@@ -220,30 +282,29 @@ BacktestResultExporter.prototype.processRoundtrip = function(roundtrip) {
   });
 };
 
-BacktestResultExporter.prototype.processTradeCompleted = function(trade) {
+BacktestResultExporter.prototype.processTradeCompleted = function (trade) {
   this.trades.push({
     ...trade,
     date: trade.date.unix(),
   });
 };
 
-BacktestResultExporter.prototype.processStratUpdate = function(stratUpdate) {
+BacktestResultExporter.prototype.processStratUpdate = function (stratUpdate) {
   this.stratUpdates.push({
     ...stratUpdate,
     date: stratUpdate.date.unix(),
   });
 };
 
-BacktestResultExporter.prototype.processPerformanceReport = function(performanceReport) {
+BacktestResultExporter.prototype.processPerformanceReport = function (performanceReport) {
   this.performanceReport = performanceReport;
 };
 
-BacktestResultExporter.prototype.finalize = function(done) {
+BacktestResultExporter.prototype.finalize = function (done) {
   const backtest = {
     performanceReport: this.performanceReport,
   };
 
-  console.log('check resultexporter', config.backtestResultExporter.data);
 
   if (config.backtestResultExporter.data.stratUpdates) backtest.stratUpdates = this.stratUpdates;
 
@@ -262,13 +323,19 @@ BacktestResultExporter.prototype.finalize = function(done) {
   if (config.backtestResultExporter.data.bounces) backtest.bounces = this.bounces;
 
   if (env === 'child-process') {
-    process.send({ backtest });
+    process.send({
+      backtest
+    });
   }
 
   const csvInflectionFields = ['type', 'x', 'open', 'close', 'high', 'low', 'volume'];
   const csvCandlesFields = ['x', 'open', 'close', 'high', 'low', 'volume'];
-  const optsI = { fields: csvInflectionFields };
-  const optsC = { fields: csvCandlesFields };
+  const optsI = {
+    fields: csvInflectionFields
+  };
+  const optsC = {
+    fields: csvCandlesFields
+  };
   // console.log('candles', this.stratCandles);
   try {
     const inflections = json2csv(this.inflections, optsI);
@@ -287,7 +354,7 @@ BacktestResultExporter.prototype.finalize = function(done) {
   }
 };
 
-BacktestResultExporter.prototype.writeToDisk = function(backtest, next, section) {
+BacktestResultExporter.prototype.writeToDisk = function (backtest, next, section) {
   const now = moment().format('YYYY-MM-DD_HH-mm-ss');
   let filename;
   if (section) filename = `${section}-backtest-${config.tradingAdvisor.method}-${now}.csv`;
