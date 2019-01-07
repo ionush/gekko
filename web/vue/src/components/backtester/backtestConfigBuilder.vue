@@ -9,11 +9,12 @@
 </template>
 
 <script>
-import datasetPicker from '../global/configbuilder/datasetpicker.vue';
-import stratPicker from '../global/configbuilder/stratpicker.vue';
-import paperTrader from '../global/configbuilder/papertrader.vue';
-import _ from 'lodash';
-import { get } from '../../tools/ajax';
+
+import datasetPicker from '../global/configbuilder/datasetpicker.vue'
+import stratPicker from '../global/configbuilder/stratpicker.vue'
+import paperTrader from '../global/configbuilder/papertrader.vue'
+import _ from 'lodash'
+import { get } from '../../tools/ajax'
 
 export default {
   created: function() {
@@ -27,31 +28,33 @@ export default {
       dataset: {},
       strat: {},
       paperTrader: {},
-      performanceAnalyzer: {},
-    };
+      performanceAnalyzer: {}
+    }
   },
   components: {
     stratPicker,
     datasetPicker,
-    paperTrader,
+    paperTrader
   },
   computed: {
     market: function() {
-      if (!this.dataset.exchange) return {};
+      if(!this.dataset.exchange)
+        return {};
 
       return {
         exchange: this.dataset.exchange,
         currency: this.dataset.currency,
-        asset: this.dataset.asset,
-      };
+        asset: this.dataset.asset
+      }
     },
     range: function() {
-      if (!this.dataset.exchange) return {};
+      if(!this.dataset.exchange)
+        return {};
 
       return {
         from: this.dataset.from,
-        to: this.dataset.to,
-      };
+        to: this.dataset.to
+      }
     },
     config: function() {
       let config = {};
@@ -62,48 +65,55 @@ export default {
         this.strat,
         {
           backtest: {
-            daterange: this.range,
+            daterange: this.range
           },
           backtestResultExporter: {
             enabled: true,
-            writeToDisk: true,
+            writeToDisk: false,
             data: {
-              inflections: true,
               stratUpdates: false,
               roundtrips: true,
               stratCandles: true,
-              stratCandleProps: ['open', 'close', 'high', 'low', 'volume'],
-              trades: true,
-            },
-          },
+              stratCandleProps: ['open'],
+              trades: true
+            }
+          }
         },
-        { performanceAnalyzer: this.performanceAnalyzer }
+        { performanceAnalyzer: this.performanceAnalyzer },
       );
 
       config.valid = this.validConfig(config);
       config.backtestResultExporter.enabled = true;
 
       return config;
-    },
+    }
   },
   methods: {
     validConfig: function(config) {
-      if (!config.backtest) return false;
+      if(!config.backtest)
+        return false;
 
-      if (!config.backtest.daterange) return false;
+      if(!config.backtest.daterange)
+        return false;
 
-      if (_.isEmpty(config.backtest.daterange)) return false;
+      if(_.isEmpty(config.backtest.daterange))
+        return false;
 
-      if (!config.watch) return false;
+      if(!config.watch)
+        return false;
 
-      if (!config.tradingAdvisor) return false;
+      if(!config.tradingAdvisor)
+        return false;
 
       let strat = config.tradingAdvisor.method;
-      if (_.isEmpty(config[strat])) return false;
+      if(_.isEmpty(config[ strat ]))
+        return false;
 
-      if (config.tradingAdvisor) {
-        if (_.isNaN(config.tradingAdvisor.candleSize)) return false;
-        else if (config.tradingAdvisor.candleSize == 0) return false;
+      if(config.tradingAdvisor) {
+        if(_.isNaN(config.tradingAdvisor.candleSize))
+          return false;
+        else if(config.tradingAdvisor.candleSize == 0)
+          return false;
       }
 
       return true;
@@ -121,8 +131,8 @@ export default {
       this.paperTrader.enabled = true;
       this.$emit('config', this.config);
     },
-  },
-};
+  }
+}
 </script>
 
 <style>

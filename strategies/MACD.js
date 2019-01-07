@@ -23,7 +23,7 @@ method.init = function() {
     direction: 'none',
     duration: 0,
     persisted: false,
-    adviced: false,
+    adviced: false
   };
 
   // how many candles do we need as a base
@@ -32,12 +32,12 @@ method.init = function() {
 
   // define the indicators we need
   this.addIndicator('macd', 'MACD', this.settings);
-};
+}
 
 // what happens on every new candle?
 method.update = function(candle) {
   // nothing!
-};
+}
 
 // for debugging purposes: log the last calculated
 // EMAs and diff.
@@ -48,63 +48,70 @@ method.log = function() {
   var diff = macd.diff;
   var signal = macd.signal.result;
 
-  // console.log('calculated MACD properties for candle:');
-  // console.log('\t', 'short:', macd.short.result.toFixed(digits));
-  // console.log('\t', 'long:', macd.long.result.toFixed(digits));
-  // console.log('\t', 'macd:', diff.toFixed(digits));
-  // console.log('\t', 'signal:', signal.toFixed(digits));
-  // console.log('\t', 'macdiff:', macd.result.toFixed(digits));
-  // console.log('this.candle', this.candle);
-  // console.log('this', this);
-};
+  log.debug('calculated MACD properties for candle:');
+  log.debug('\t', 'short:', macd.short.result.toFixed(digits));
+  log.debug('\t', 'long:', macd.long.result.toFixed(digits));
+  log.debug('\t', 'macd:', diff.toFixed(digits));
+  log.debug('\t', 'signal:', signal.toFixed(digits));
+  log.debug('\t', 'macdiff:', macd.result.toFixed(digits));
+}
 
 method.check = function() {
   var macddiff = this.indicators.macd.result;
 
-  if (macddiff > this.settings.thresholds.up) {
+  if(macddiff > this.settings.thresholds.up) {
+
     // new trend detected
-    if (this.trend.direction !== 'up')
+    if(this.trend.direction !== 'up')
       // reset the state for the new trend
       this.trend = {
         duration: 0,
         persisted: false,
         direction: 'up',
-        adviced: false,
+        adviced: false
       };
 
     this.trend.duration++;
 
-    // console.log('In uptrend since', this.trend.duration, 'candle(s)');
+    log.debug('In uptrend since', this.trend.duration, 'candle(s)');
 
-    if (this.trend.duration >= this.settings.thresholds.persistence) this.trend.persisted = true;
+    if(this.trend.duration >= this.settings.thresholds.persistence)
+      this.trend.persisted = true;
 
-    if (this.trend.persisted && !this.trend.adviced) {
+    if(this.trend.persisted && !this.trend.adviced) {
       this.trend.adviced = true;
       this.advice('long');
-    } else this.advice();
-  } else if (macddiff < this.settings.thresholds.down) {
+    } else
+      this.advice();
+
+  } else if(macddiff < this.settings.thresholds.down) {
+
     // new trend detected
-    if (this.trend.direction !== 'down')
+    if(this.trend.direction !== 'down')
       // reset the state for the new trend
       this.trend = {
         duration: 0,
         persisted: false,
         direction: 'down',
-        adviced: false,
+        adviced: false
       };
 
     this.trend.duration++;
 
-    // console.log('In downtrend since', this.trend.duration, 'candle(s)');
+    log.debug('In downtrend since', this.trend.duration, 'candle(s)');
 
-    if (this.trend.duration >= this.settings.thresholds.persistence) this.trend.persisted = true;
+    if(this.trend.duration >= this.settings.thresholds.persistence)
+      this.trend.persisted = true;
 
-    if (this.trend.persisted && !this.trend.adviced) {
+    if(this.trend.persisted && !this.trend.adviced) {
       this.trend.adviced = true;
       this.advice('short');
-    } else this.advice();
+    } else
+      this.advice();
+
   } else {
-    // console.log('In no trend');
+
+    log.debug('In no trend');
 
     // we're not in an up nor in a downtrend
     // but for now we ignore sideways trends
@@ -122,6 +129,6 @@ method.check = function() {
 
     this.advice();
   }
-};
+}
 
 module.exports = method;

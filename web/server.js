@@ -27,14 +27,15 @@ wss.on('connection', ws => {
   });
   ws.ping(_.noop);
   ws.on('error', e => {
-    console.error(new Date(), '[WS] connection error:', e);
+    console.error(new Date, '[WS] connection error:', e);
   });
 });
 
+
 setInterval(() => {
   wss.clients.forEach(ws => {
-    if (!ws.isAlive) {
-      console.log(new Date(), '[WS] stale websocket client, terminiating..');
+    if(!ws.isAlive) {
+      console.log(new Date, '[WS] stale websocket client, terminiating..');
       return ws.terminate();
     }
 
@@ -45,7 +46,7 @@ setInterval(() => {
 
 // broadcast function
 const broadcast = data => {
-  if (_.isEmpty(data)) {
+  if(_.isEmpty(data)) {
     return;
   }
 
@@ -53,20 +54,22 @@ const broadcast = data => {
 
   wss.clients.forEach(ws => {
     ws.send(payload, err => {
-      if (err) {
-        console.log(new Date(), '[WS] unable to send data to client:', err);
+      if(err) {
+        console.log(new Date, '[WS] unable to send data to client:', err);
       }
     });
-  });
-};
+  }
+  );
+}
 cache.set('broadcast', broadcast);
+
 
 const ListManager = require('./state/listManager');
 const GekkoManager = require('./state/gekkoManager');
 
 // initialize lists and dump into cache
-cache.set('imports', new ListManager());
-cache.set('gekkos', new GekkoManager());
+cache.set('imports', new ListManager);
+cache.set('gekkos', new GekkoManager);
 cache.set('apiKeyManager', require('./apiKeyManager'));
 
 // setup API routes
@@ -97,6 +100,7 @@ router.post('/api/stopGekko', require(ROUTE('stopGekko')));
 router.post('/api/deleteGekko', require(ROUTE('deleteGekko')));
 router.post('/api/getCandles', require(ROUTE('getCandles')));
 
+
 // incoming WS:
 // wss.on('connection', ws => {
 //   ws.on('message', _.noop);
@@ -115,23 +119,21 @@ server.on('request', app.callback());
 server.listen(config.api.port, config.api.host, '::', () => {
   const host = `${config.ui.host}:${config.ui.port}${config.ui.path}`;
 
-  if (config.ui.ssl) {
+  if(config.ui.ssl) {
     var location = `https://${host}`;
   } else {
     var location = `http://${host}`;
   }
 
-  console.log('Serving Gekko UI on ' + location + '\n');
+  console.log('Serving Gekko UI on ' + location +  '\n');
+
 
   // only open a browser when running `node gekko`
   // this prevents opening the browser during development
-  if (!isDevServer && !config.headless) {
-    opn(location).catch(err => {
-      console.log(
-        'Something went wrong when trying to open your web browser. UI is running on ' +
-          location +
-          '.'
-      );
+  if(!isDevServer && !config.headless) {
+    opn(location)
+      .catch(err => {
+        console.log('Something went wrong when trying to open your web browser. UI is running on ' + location + '.');
     });
   }
 });

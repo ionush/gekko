@@ -7,8 +7,6 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
-    "highcharts": "^6.2.0",
-    "highcharts-vue": "^1.2.0",
     "marked": "^0.4.0",
     "superagent": "^3.8.3",
     "superagent-no-cache": "github:uditalias/superagent-no-cache",
@@ -20,7 +18,6 @@
     "@vue/cli-plugin-babel": "^3.0.0-beta.15",
     "@vue/cli-service": "^3.0.0-beta.15",
     "babel-plugin-transform-commonjs-es2015-modules": "^4.0.1",
-    "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "copy-webpack-plugin": "^4.5.2",
     "pug": "^2.0.3",
     "pug-plain-loader": "^1.0.0",
