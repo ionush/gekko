@@ -9,19 +9,23 @@ const config = util.getConfig();
 const moment = require('moment');
 const fs = require('fs');
 const json2csv = require('json2csv').parse;
+const timeseries = require('timeseries-analysis');
 
-const BacktestResultExporter = function() {
+const BacktestResultExporter = function () {
   this.performanceReport;
   this.roundtrips = [];
   this.stratUpdates = [];
   this.stratCandles = [];
   this.trades = [];
   this.inflections = [];
+  this.inflectionLength = undefined;
   this.closeLine = [];
+  this.regression = [];
+  this.bounces = [];
 
   this.candleProps = config.backtestResultExporter.data.stratCandleProps;
 
-  if (!config.backtestResultExporter.data.inflections) this.processInflection = null;
+  // if (!config.backtestResultExporter.data.inflections) this.processInflection = null;
 
   if (!config.backtestResultExporter.data.stratUpdates) this.processStratUpdate = null;
 
@@ -36,7 +40,7 @@ const BacktestResultExporter = function() {
   _.bindAll(this);
 };
 
-const findInflection = function(range, store, candle) {
+const findInflection = function (range, store) {
   if (range % 2 !== 1) {
     console.log('range must be odd number!');
     return;
@@ -50,55 +54,194 @@ const findInflection = function(range, store, candle) {
   const sample = store.slice(store.length - range, store.length);
 
   //support & resistance
-  //verify values to left of middle are increasing
-  //verify values to left of middle are decreasing
   for (let i = middle - 1; i >= 0; i--) {
+    //verify values to left of middle are increasing
     if (sample[i].low <= sample[i + 1].low) followVTrend = false;
+    //verify values to left of middle are decreasing
     if (sample[i].high >= sample[i + 1].high) followNTrend = false;
   }
 
-  //verify values to right of middle are increasing
-  //verify values to right of middle are decreasing
   for (let j = middle + 1; j < range; j++) {
+    //verify values to right of middle are increasing
     if (sample[j].low <= sample[j - 1].low) followVTrend = false;
+    //verify values to right of middle are decreasing
     if (sample[j].high >= sample[j - 1].high) followNTrend = false;
   }
 
-  const { open, close, x, high, volume, low, close: y } = sample[middle];
+  const {
+    open,
+    close,
+    x,
+    high,
+    volume,
+    low,
+    close: y
+  } = sample[middle];
 
-  // if (followVTrend && followNTrend)
-  //   return [
-  //     { type: 'v', date: sample[middle].start, open, close, high, volume, low },
-  //     { type: 'n', date: sample[middle].start, open, close, high, volume, low },
-  //   ];
+  if (followVTrend && followNTrend)
+    return [{
+        type: 'support',
+        x,
+        open,
+        close,
+        high,
+        volume,
+        low,
+        y
+      },
+      {
+        type: 'resistance',
+        x,
+        open,
+        close,
+        high,
+        volume,
+        low,
+        y
+      },
+    ];
 
-  if (followVTrend) return { type: 'support', x, open, close, high, volume, low, y };
+  if (followVTrend) return {
+    type: 'support',
+    x,
+    open,
+    close,
+    high,
+    volume,
+    low,
+    y
+  };
 
-  if (followNTrend) return { type: 'resistance', x, open, close, high, volume, low, y };
+  if (followNTrend) return {
+    type: 'resistance',
+    x,
+    open,
+    close,
+    high,
+    volume,
+    low,
+    y
+  };
 };
 
-BacktestResultExporter.prototype.processInflection = function(inflection) {
-  // this.inflections.push({ type: inflection.type, close: inflection.close });
+const calcRegression = (forecastPoints, store) => {
+  const sampleSize = store.length - forecastPoints;
+
+  if (sampleSize < 10) return;
+  const t = new timeseries.main(
+    timeseries.adapter.fromDB(store, {
+      date: 'x',
+      value: 'close',
+    })
+  );
+  const regression = t.sliding_regression_forecast({
+    sample: sampleSize,
+    degree: 5
+  }).output();
+  return regression;
 };
 
-BacktestResultExporter.prototype.processPortfolioValueChange = function(portfolio) {
+const calcBounces = inflections => {
+  if (!inflections) return;
+  if (this.inflectionLength === inflections.length) return;
+  else this.inflectionLength = inflections.length;
+
+  const bounces = [];
+  for (let i = 0; i < inflections.length; i++) {
+    if (inflections[i].type === 'support') {
+      for (let j = i; j < inflections.length; j++) {
+        if (
+          inflections[j].type === 'resistance' &&
+          inflections[j].x > inflections[i].x
+          // &&
+          // inflections[j].high > inflections[i].low
+        ) {
+          bounces.push([inflections[i], inflections[j]]);
+          break;
+        }
+      }
+    }
+  }
+  const consolidated = consolidateBounces(bounces);
+  return consolidated;
+};
+
+const consolidateBounces = bounces => {
+  const writeConsolidatedBounce = (bounces, consolidatedBounces, startIndex, i) => {
+    const size = (bounces[i][1].high / bounces[startIndex][0].low - 1) * 100;
+    const recency = bounces[startIndex][0].x;
+    const duration = bounces[i][1].x - bounces[startIndex][0].x;
+    consolidatedBounces.push({
+      bounce: [bounces[i][0], bounces[startIndex][1]],
+      size,
+      recency,
+      duration,
+      consolidated: true
+    });
+  };
+
+  const writeSingleBounce = (bounces, consolidateBounces, i) => {
+    const size = (bounces[i][1].high / bounces[i][0].low - 1) * 100
+    const recency = bounces[i][0].x
+    const duration = bounces[i][1].x - bounces[i][0].x
+    consolidateBounces.push({
+      bounce: [bounces[i][0], bounces[i][1]],
+      size,
+      recency,
+      duration,
+      consolidated: false
+    })
+  }
+
+  if (bounces.length < 2) return;
+  const consolidatedBounces = [];
+  let startIndex = undefined;
+  for (let i = 1; i < bounces.length; i++) {
+    if (bounces[i][0].low >= bounces[i - 1][0].low && bounces[i][1].high >= bounces[i - 1][1].high) {
+      if (!startIndex && i === bounces.length - 1) {
+        startIndex = i - 1;
+        writeConsolidatedBounce(bounces, consolidatedBounces, startIndex, i);
+      } else if (!startIndex) startIndex = i - 1;
+    } else if (startIndex) {
+      writeConsolidatedBounce(bounces, consolidatedBounces, startIndex, i - 1);
+      startIndex = undefined;
+    } else {
+      writeSingleBounce(bounces, consolidatedBounces, i - 1)
+    }
+  }
+  return consolidatedBounces;
+};
+
+// BacktestResultExporter.prototype.processInflection = function(inflection) {
+//   // this.inflections.push({ type: inflection.type, close: inflection.close });
+// };
+
+BacktestResultExporter.prototype.processPortfolioValueChange = function (portfolio) {
   this.portfolioValue = portfolio.balance;
 };
 
-BacktestResultExporter.prototype.processStratCandle = function(candle) {
-  const result = findInflection(3, this.stratCandles, candle);
-  // console.log('configg', config.backtestResultExporter.data);
+BacktestResultExporter.prototype.processStratCandle = function (candle) {
+  const inflection = findInflection(3, this.stratCandles);
+  if (Array.isArray(inflection)) this.inflections.push(...inflection);
+  else if (inflection) this.inflections.push(inflection);
 
-  // if (result && result.length === 2) {
-  // this.inflections.push(...result);
-  // } else
-  if (result) this.inflections.push(result);
+  const regression = calcRegression(30, this.stratCandles);
+  if (regression) this.regression = regression;
+
+  const bounces = calcBounces(this.inflections);
+  if (bounces) this.bounces = bounces;
+
+  // console.log('bouncesss', this.bounces);
+
+  // console.log('configg', config.backtestResultExporter.data);
 
   let strippedCandle;
 
-  this.closeLine.push({ x: candle.start.valueOf(), close: candle.close, y: candle.close });
-
-  // console.log('timeeee', candle.start);
+  this.closeLine.push({
+    x: candle.start.valueOf(),
+    close: candle.close,
+    y: candle.close
+  });
 
   if (!this.candleProps) {
     strippedCandle = {
@@ -131,7 +274,7 @@ BacktestResultExporter.prototype.processStratCandle = function(candle) {
   this.stratCandles.push(strippedCandle);
 };
 
-BacktestResultExporter.prototype.processRoundtrip = function(roundtrip) {
+BacktestResultExporter.prototype.processRoundtrip = function (roundtrip) {
   this.roundtrips.push({
     ...roundtrip,
     entryAt: roundtrip.entryAt.unix(),
@@ -139,28 +282,29 @@ BacktestResultExporter.prototype.processRoundtrip = function(roundtrip) {
   });
 };
 
-BacktestResultExporter.prototype.processTradeCompleted = function(trade) {
+BacktestResultExporter.prototype.processTradeCompleted = function (trade) {
   this.trades.push({
     ...trade,
     date: trade.date.unix(),
   });
 };
 
-BacktestResultExporter.prototype.processStratUpdate = function(stratUpdate) {
+BacktestResultExporter.prototype.processStratUpdate = function (stratUpdate) {
   this.stratUpdates.push({
     ...stratUpdate,
     date: stratUpdate.date.unix(),
   });
 };
 
-BacktestResultExporter.prototype.processPerformanceReport = function(performanceReport) {
+BacktestResultExporter.prototype.processPerformanceReport = function (performanceReport) {
   this.performanceReport = performanceReport;
 };
 
-BacktestResultExporter.prototype.finalize = function(done) {
+BacktestResultExporter.prototype.finalize = function (done) {
   const backtest = {
     performanceReport: this.performanceReport,
   };
+
 
   if (config.backtestResultExporter.data.stratUpdates) backtest.stratUpdates = this.stratUpdates;
 
@@ -174,19 +318,29 @@ BacktestResultExporter.prototype.finalize = function(done) {
 
   if (config.backtestResultExporter.data.closeLine) backtest.closeLine = this.closeLine;
 
+  if (config.backtestResultExporter.data.regression) backtest.regression = this.regression;
+
+  if (config.backtestResultExporter.data.bounces) backtest.bounces = this.bounces;
+
   if (env === 'child-process') {
-    process.send({ backtest });
+    process.send({
+      backtest
+    });
   }
 
   const csvInflectionFields = ['type', 'x', 'open', 'close', 'high', 'low', 'volume'];
   const csvCandlesFields = ['x', 'open', 'close', 'high', 'low', 'volume'];
-  const optsI = { fields: csvInflectionFields };
-  const optsC = { fields: csvCandlesFields };
+  const optsI = {
+    fields: csvInflectionFields
+  };
+  const optsC = {
+    fields: csvCandlesFields
+  };
   // console.log('candles', this.stratCandles);
   try {
     const inflections = json2csv(this.inflections, optsI);
     const candles = json2csv(this.stratCandles, optsC);
-    console.log('csv', inflections);
+    // console.log('csv', inflections);
     this.writeToDisk(candles, () => {}, 'candles');
     this.writeToDisk(inflections, () => {}, 'inflections');
   } catch (e) {
@@ -200,7 +354,7 @@ BacktestResultExporter.prototype.finalize = function(done) {
   }
 };
 
-BacktestResultExporter.prototype.writeToDisk = function(backtest, next, section) {
+BacktestResultExporter.prototype.writeToDisk = function (backtest, next, section) {
   const now = moment().format('YYYY-MM-DD_HH-mm-ss');
   let filename;
   if (section) filename = `${section}-backtest-${config.tradingAdvisor.method}-${now}.csv`;

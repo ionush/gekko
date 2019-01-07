@@ -44,6 +44,7 @@
     "semver": "5.4.1",
     "sqlite3": "^4.0.0",
     "stats-lite": "^2.0.4",
+    "timeseries-analysis": "^1.0.12",
     "tiny-promisify": "^0.1.1",
     "toml": "^2.3.0",
     "ws": "^6.0.0"

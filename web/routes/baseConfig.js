@@ -29,6 +29,8 @@ config.backtestResultExporter = {
     trades: true,
     inflections: true,
     closeLine: true,
+    regression: true,
+    bounces: true,
   },
 };
 
